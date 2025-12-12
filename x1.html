@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>绍兴实景解谜提示系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 700px;
+            width: 100%;
+            background: rgba(25, 25, 35, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .header {
+            background: rgba(10, 10, 20, 0.9);
+            padding: 25px 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: #fdbb2d;
+            text-shadow: 0 0 10px rgba(253, 187, 45, 0.5);
+        }
+        
+        .header p {
+            color: #aaa;
+            font-size: 16px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .punishment-area {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .punishment-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+        
+        .countdown {
+            font-size: 70px;
+            font-weight: bold;
+            color: #ff4444;
+            text-shadow: 0 0 15px rgba(255, 68, 68, 0.7);
+            margin: 20px 0;
+            transition: all 0.3s;
+        }
+        
+        .punishment-message {
+            font-size: 18px;
+            margin: 20px 0;
+            color: #ccc;
+            line-height: 1.6;
+        }
+        
+        .hint-content {
+            display: none;
+            margin-top: 30px;
+            padding: 25px;
+            background: rgba(30, 30, 40, 0.8);
+            border-radius: 15px;
+            text-align: left;
+            border: 1px solid rgba(253, 187, 45, 0.3);
+            box-shadow: 0 0 15px rgba(253, 187, 45, 0.2);
+        }
+        
+        .hint-title {
+            color: #fdbb2d;
+            font-weight: bold;
+            font-size: 22px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .hint-title i {
+            margin-right: 10px;
+        }
+        
+        .hint-text {
+            font-size: 18px;
+            line-height: 1.6;
+            color: #e0e0e0;
+            margin-bottom: 15px;
+        }
+        
+        .level-info {
+            display: inline-block;
+            background: rgba(253, 187, 45, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #fdbb2d;
+        }
+        
+        .hint-type {
+            display: inline-block;
+            background: rgba(26, 115, 232, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #4dabf7;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #777;
+            font-size: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #1a2a6c, #b21f1f);
+            border-radius: 4px;
+            transition: width 1s linear;
+        }
+        
+        /* 按钮样式 */
+        .button-container {
+            margin-top: 25px;
+            text-align: center;
+        }
+        
+        .unlock-button {
+            background: linear-gradient(135deg, #ff4444, #ff6b6b);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(255, 68, 68, 0.4);
+        }
+        
+        .unlock-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 68, 68, 0.6);
+        }
+        
+        .unlock-button:active {
+            transform: translateY(0);
+        }
+        
+        /* 确认对话框样式 */
+        .confirm-dialog {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .confirm-content {
+            background: rgba(30, 30, 40, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            border: 2px solid rgba(253, 187, 45, 0.5);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+        }
+        
+        .confirm-title {
+            color: #fdbb2d;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        
+        .confirm-message {
+            font-size: 18px;
+            color: #e0e0e0;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .confirm-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .confirm-button {
+            padding: 12px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-width: 120px;
+        }
+        
+        .confirm-yes {
+            background: linear-gradient(135deg, #4CAF50, #2E7D32);
+            color: white;
+        }
+        
+        .confirm-no {
+            background: linear-gradient(135deg, #757575, #424242);
+            color: white;
+        }
+        
+        .confirm-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* 密码展示页面样式 */
+        .password-page {
+            display: none;
+            text-align: center;
+        }
+        
+        .password-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            color: #4CAF50;
+        }
+        
+        .password-title {
+            font-size: 28px;
+            color: #fdbb2d;
+            margin-bottom: 15px;
+        }
+        
+        .password-value {
+            font-size: 48px;
+            font-weight: bold;
+            color: #4CAF50;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(76, 175, 80, 0.1);
+            border-radius: 10px;
+            border: 2px solid rgba(76, 175, 80, 0.3);
+            letter-spacing: 3px;
+        }
+        
+        .password-hint {
+            font-size: 16px;
+            color: #aaa;
+            margin-top: 20px;
+        }
+        
+        .back-button {
+            background: linear-gradient(135deg, #2196F3, #0D47A1);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 30px;
+        }
+        
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.4);
+        }
+        
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .countdown {
+                font-size: 50px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .confirm-buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .confirm-button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🕵️ 绍兴实景解谜提示系统</h1>
+            <p>寻求提示需要付出代价！请耐心等待...</p>
+        </div>
+        
+        <div class="content">
+            <!-- 倒计时区域 -->
+            <div class="punishment-area" id="punishmentArea">
+                <div class="punishment-icon">⏳</div>
+                <div class="countdown" id="countdown">60</div>
+                <div class="punishment-message" id="message">
+                    倒计时结束后将显示提示信息
+                </div>
+                
+                <div class="progress-container">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+            </div>
+            
+            <!-- 密码提示区域 -->
+            <div class="hint-content" id="hintContent">
+                <div class="hint-title">
+                    <i>🔍</i> 第 <span id="levelNumber">X</span> 关：<span id="levelName">关卡名称</span>
+                </div>
+                <div class="hint-type" id="hintType">
+                    提示类型：<span id="typeText">未知</span>
+                </div>
+                <div class="hint-text" id="hintText">
+                    <!-- 提示内容将在这里显示 -->
+                </div>
+                
+                <div class="button-container" id="buttonContainer">
+                    <!-- 解锁按钮将在这里添加 -->
+                </div>
+            </div>
+            
+            <!-- 密码展示页面 -->
+            <div class="password-page" id="passwordPage">
+                <div class="password-icon">🔓</div>
+                <div class="password-title">最终密码解锁</div>
+                <div class="level-info">
+                    第 <span id="passwordLevelNumber">X</span> 关：<span id="passwordLevelName">关卡名称</span>
+                </div>
+                <div class="password-value" id="finalPassword">
+                    <!-- 最终密码将在这里显示 -->
+                </div>
+                <div class="password-hint">
+                    恭喜！你已解锁最终密码。请使用此密码进入下一关。
+                </div>
+                <button class="back-button" id="backButton">返回提示页面</button>
+            </div>
+        </div>
+        
+        <div class="footer">
+            绍兴实景解谜游戏 &copy; 2025 | 请尊重游戏规则，享受解谜乐趣
+        </div>
+    </div>
+    
+    <!-- 确认对话框 -->
+    <div class="confirm-dialog" id="confirmDialog">
+        <div class="confirm-content">
+            <div class="confirm-title">⚠️ 最终密码确认</div>
+            <div class="confirm-message" id="confirmMessage">
+                你真的要现在查看最终密码吗？<br>
+                这可能会减少解谜的乐趣。建议先尝试自己破解。
+            </div>
+            <div class="confirm-buttons">
+                <button class="confirm-button confirm-yes" id="confirmYes">是，查看密码</button>
+                <button class="confirm-button confirm-no" id="confirmNo">否，继续思考</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 获取URL参数中的关卡信息
+        function getQueryParam(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        /* ==============================
+           提示内容数据库
+           根据您的需求设置不同关卡的提示
+        ============================== */
+        const hints = {
+            // 第一关 - 书圣故里
+            'level1-location': {
+                text: '“书圣遗风，墨香犹在”之地：书圣故里。彼处有桥，其名正源自“为老妪题扇”之雅事：提扇桥。',
+                password: null,
+                levelName: '书圣故里',
+                hintType: '地点提示',
+                hasPassword: false
+            },
+            'level1-password': {
+                text: '提扇桥外边东北侧那片区域，地上有一块青石板上有刻字。',
+                password: '周',
+                levelName: '书圣故里',
+                hintType: '密码提示',
+                hasPassword: true
+            },
+            // 第二关 - 八字桥
+            'level2': {
+                text: '广厦为八字桥东北方向的世贸大厦，顶部避雷针外形对应数字：1；八字桥对应数字：8；西洋教堂为八字桥西北方向的天主堂，顶部十字架对应数字：10；依据"而今远处广厦矗立，八字桥静卧其间，复见西洋教堂遥相对望"，数字顺序应为广厦、八字桥、教堂。',
+                password: '1810',
+                levelName: '八字桥',
+                hintType: '密码提示',
+                hasPassword: true
+            },
+            // 第三关 - 鲁迅故里
+            'level3': {
+                text: '《绍兴府城衢路图》具体位置：在第三进香火堂西侧厢房《会稽覆盆桥周氏家史展》墙上；图形对应区域在图中中轴线北部右侧。',
+                password: '三埭街',
+                levelName: '鲁迅故里',
+                hintType: '密码提示',
+                hasPassword: true
+            },
+            // 第四关 - 青藤书屋
+            'level4': {
+                text: '迷宫图中的诗句：青藤素壁列明文，辛巳深藏四数寻。"青藤素壁列明文"指青藤书屋墙上挂的《徐渭与青藤书屋纪年》，"辛巳深藏四数寻"指在《纪年》中"辛巳"所对应的公元年份。',
+                password: '1521',
+                levelName: '青藤书屋',
+                hintType: '密码提示',
+                hasPassword: true
+            },
+            // 第五关 - 府山
+            'level5': {
+                text: '书签背面的图像是戏台柱上的四句联文，找到空白格对应的两个字。',
+                password: '戏子',
+                levelName: '府山',
+                hintType: '密码提示',
+                hasPassword: true
+            }
+        };
+
+        // 全局变量
+        let timeLeft = 60;
+        let currentLevel = '';
+        let currentHint = null;
+
+        // 获取DOM元素
+        const countdownElement = document.getElementById('countdown');
+        const progressBar = document.getElementById('progressBar');
+        const hintContentElement = document.getElementById('hintContent');
+        const hintTextElement = document.getElementById('hintText');
+        const messageElement = document.getElementById('message');
+        const levelNumberElement = document.getElementById('levelNumber');
+        const levelNameElement = document.getElementById('levelName');
+        const typeTextElement = document.getElementById('typeText');
+        const punishmentArea = document.getElementById('punishmentArea');
+        const buttonContainer = document.getElementById('buttonContainer');
+        const confirmDialog = document.getElementById('confirmDialog');
+        const confirmMessage = document.getElementById('confirmMessage');
+        const confirmYes = document.getElementById('confirmYes');
+        const confirmNo = document.getElementById('confirmNo');
+        const passwordPage = document.getElementById('passwordPage');
+        const passwordLevelNumber = document.getElementById('passwordLevelNumber');
+        const passwordLevelName = document.getElementById('passwordLevelName');
+        const finalPassword = document.getElementById('finalPassword');
+        const backButton = document.getElementById('backButton');
+
+        // 根据URL参数获取对应关卡的提示
+        currentLevel = getQueryParam('level') || 'level1-location';
+        currentHint = hints[currentLevel] || {
+            text: '请检查关卡参数是否正确，确保使用的是有效的关卡代码。',
+            password: null,
+            levelName: '未知关卡',
+            hintType: '错误提示',
+            hasPassword: false
+        };
+
+        // 显示关卡信息
+        levelNumberElement.textContent = currentLevel.replace('level', '').split('-')[0];
+        levelNameElement.textContent = currentHint.levelName;
+        typeTextElement.textContent = currentHint.hintType;
+
+        // 更新进度条
+        function updateProgressBar() {
+            const progress = (60 - timeLeft) / 60 * 100;
+            progressBar.style.width = `${progress}%`;
+        }
+
+        // 显示确认对话框
+        function showConfirmDialog() {
+            confirmMessage.innerHTML = `
+                你真的要现在查看第${currentLevel.replace('level', '').split('-')[0]}关的最终密码吗？<br>
+                这可能会减少解谜的乐趣。建议先尝试自己破解。
+            `;
+            confirmDialog.style.display = 'flex';
+        }
+
+        // 隐藏确认对话框
+        function hideConfirmDialog() {
+            confirmDialog.style.display = 'none';
+        }
+
+        // 显示密码页面
+        function showPasswordPage() {
+            hintContentElement.style.display = 'none';
+            passwordPage.style.display = 'block';
+            
+            // 设置密码页面信息
+            passwordLevelNumber.textContent = currentLevel.replace('level', '').split('-')[0];
+            passwordLevelName.textContent = currentHint.levelName;
+            finalPassword.textContent = currentHint.password;
+        }
+
+        // 显示提示内容页面
+        function showHintContentPage() {
+            passwordPage.style.display = 'none';
+            hintContentElement.style.display = 'block';
+        }
+
+        // 添加解锁按钮
+        function addUnlockButton() {
+            if (currentHint.hasPassword) {
+                buttonContainer.innerHTML = `
+                    <button class="unlock-button" id="unlockButton">
+                        🔓 获取最终密码
+                    </button>
+                `;
+                
+                // 为解锁按钮添加点击事件
+                document.getElementById('unlockButton').addEventListener('click', showConfirmDialog);
+            } else {
+                buttonContainer.innerHTML = '<p style="color:#aaa; font-style:italic;">此提示无密码</p>';
+            }
+        }
+
+        // 开始倒计时
+        const countdown = setInterval(() => {
+            timeLeft--;
+            countdownElement.textContent = timeLeft;
+            updateProgressBar();
+            
+            // 动态颜色变化
+            if (timeLeft <= 10) {
+                countdownElement.style.color = '#ff6b6b';
+                countdownElement.style.textShadow = '0 0 20px rgba(255, 107, 107, 0.9)';
+                messageElement.textContent = '即将解锁提示...';
+            } else if (timeLeft <= 30) {
+                countdownElement.style.color = '#ffa726';
+                countdownElement.style.textShadow = '0 0 15px rgba(255, 167, 38, 0.7)';
+                messageElement.textContent = '坚持住，提示即将揭晓！';
+            }
+            
+            // 倒计时结束
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                countdownElement.style.display = 'none';
+                messageElement.textContent = '时间到！以下是你的提示：';
+                progressBar.style.display = 'none';
+                
+                // 显示提示内容
+                hintTextElement.textContent = currentHint.text;
+                hintContentElement.style.display = 'block';
+                
+                // 添加解锁按钮
+                addUnlockButton();
+                
+                // 记录用户获取了提示
+                console.log(`用户获取了 ${currentLevel} 的提示: ${currentHint.levelName}`);
+            }
+        }, 1000);
+
+        // 事件监听
+        confirmYes.addEventListener('click', () => {
+            hideConfirmDialog();
+            showPasswordPage();
+        });
+
+        confirmNo.addEventListener('click', () => {
+            hideConfirmDialog();
+        });
+
+        backButton.addEventListener('click', () => {
+            showHintContentPage();
+        });
+
+        // 点击确认对话框背景关闭
+        confirmDialog.addEventListener('click', (e) => {
+            if (e.target === confirmDialog) {
+                hideConfirmDialog();
+            }
+        });
+
+        // 初始更新进度条
+        updateProgressBar();
+    </script>
+</body>
+</html>
